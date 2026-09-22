@@ -1,0 +1,1725 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>出款原因标签化方案 · AR V3 中台</title>
+<style>
+  :root{ color-scheme: light dark; }
+  html,body{ margin:0; padding:0; }
+  img{ max-width:100%; }
+  [hidden]:not([hidden="until-found"]){ display:none !important; }
+</style>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --ink:#1C232B;
+    --ink-soft:#5B6570;
+    --paper:#F3F6F4;
+    --surface:#FFFFFF;
+    --line:#DEE5E1;
+    --auto:#0E8C7E;
+    --auto-soft:#E5F4F1;
+    --manual:#B5711A;
+    --manual-soft:#FBF0DF;
+    --danger:#B5493B;
+    --shadow: 0 1px 2px rgba(28,35,43,.04), 0 8px 24px rgba(28,35,43,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#E8ECEA;
+      --ink-soft:#9AA6A0;
+      --paper:#121615;
+      --surface:#191F1D;
+      --line:#293430;
+      --auto:#4FD9C4;
+      --auto-soft:#173330;
+      --manual:#E3A64C;
+      --manual-soft:#332711;
+      --danger:#E17E6F;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#E8ECEA;
+    --ink-soft:#9AA6A0;
+    --paper:#121615;
+    --surface:#191F1D;
+    --line:#293430;
+    --auto:#4FD9C4;
+    --auto-soft:#173330;
+    --manual:#E3A64C;
+    --manual-soft:#332711;
+    --danger:#E17E6F;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:'Noto Serif SC','Songti SC',serif;
+    font-weight:700;
+    text-wrap:balance;
+    color:var(--ink);
+    margin:0;
+  }
+  code, .mono{
+    font-family:'IBM Plex Mono','SFMono-Regular',Menlo,monospace;
+  }
+
+  .page{ max-width:1180px; margin:0 auto; padding:0 32px 96px; }
+
+  /* ---------- header ---------- */
+  .hero{ padding:56px 0 28px; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
+    margin-bottom:14px;
+  }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--manual); }
+  h1.title{ font-size:34px; line-height:1.25; letter-spacing:-.01em; }
+  .subtitle{ margin-top:14px; font-size:16px; color:var(--ink-soft); }
+
+  /* ---------- sticky nav ---------- */
+  .navbar{
+    position:sticky; top:0; z-index:10;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    padding:12px 0;
+    margin-bottom:8px;
+  }
+  .navbar .page{ padding:0 24px; }
+  .navlist{ display:flex; gap:8px; flex-wrap:wrap; list-style:none; margin:0; padding:0; }
+  .navlist a{
+    display:inline-block; padding:6px 12px; border-radius:999px;
+    border:1px solid var(--line); background:var(--surface);
+    color:var(--ink-soft); text-decoration:none;
+    font-size:13px; font-weight:500;
+    transition:border-color .15s, color .15s;
+  }
+  .navlist a:hover{ border-color:var(--auto); color:var(--auto); }
+  .navlist a:focus-visible{ outline:2px solid var(--auto); outline-offset:2px; }
+
+  /* ---------- sections ---------- */
+  section{ padding:48px 0; border-top:1px solid var(--line); }
+  section:first-of-type{ border-top:none; }
+  .sec-head{ display:flex; align-items:baseline; gap:14px; margin-bottom:22px; }
+  .sec-num{
+    font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;
+    color:var(--auto); letter-spacing:.04em; flex-shrink:0;
+  }
+  h2.sec-title{ font-size:24px; }
+  p{ margin:0 0 14px; max-width:64ch; }
+  p:last-child{ margin-bottom:0; }
+  .lede{ font-size:16px; color:var(--ink-soft); max-width:60ch; margin-bottom:24px; }
+
+  strong{ color:var(--ink); font-weight:600; }
+
+  /* ---------- tag chip motif ---------- */
+  .tag{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
+    letter-spacing:.06em; text-transform:uppercase;
+    padding:3px 10px; border-radius:999px; line-height:1.6;
+  }
+  .tag-auto{ background:var(--auto-soft); color:var(--auto); }
+  .tag-manual{ background:var(--manual-soft); color:var(--manual); }
+  .tag-neutral{ background:var(--surface); color:var(--ink-soft); border:1px solid var(--line); }
+
+  /* ---------- two-lane cards ---------- */
+  .lanes{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
+  @media (max-width:640px){ .lanes{ grid-template-columns:1fr; } }
+  .lane{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:20px; box-shadow:var(--shadow);
+  }
+  .lane-auto{ border-top:3px solid var(--auto); }
+  .lane-manual{ border-top:3px solid var(--manual); }
+  .lane h3{ font-size:16px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .lane ul{ margin:0; padding-left:18px; color:var(--ink-soft); font-size:14px; }
+  .lane li{ margin-bottom:6px; }
+  .lane li::marker{ color:var(--ink-soft); }
+
+  /* ---------- diff / before-after ---------- */
+  .diff{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
+  @media (max-width:640px){ .diff{ grid-template-columns:1fr; } }
+  .diff-card{ border-radius:12px; padding:18px 20px; }
+  .diff-before{ background:var(--surface); border:1px dashed var(--line); }
+  .diff-after{ background:var(--auto-soft); border:1px solid var(--auto); }
+  .diff-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px; display:block; }
+  .diff-before .diff-label{ color:var(--ink-soft); }
+  .diff-after .diff-label{ color:var(--auto); }
+  .diff-card p{ font-size:14px; margin:0; color:var(--ink); }
+  .field-chip{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:12px;
+    background:var(--surface); border:1px solid var(--line); border-radius:6px;
+    padding:1px 7px; margin:0 2px; color:var(--danger);
+  }
+
+  /* ---------- side-by-side diagram pair ---------- */
+  .diagram-pair{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; align-items:start; }
+  @media (max-width:720px){ .diagram-pair{ grid-template-columns:1fr; } }
+  .diagram-pair .diagram{ margin:10px 0 0; height:100%; }
+
+  /* ---------- diagram card ---------- */
+  .diagram{
+    background:#FFFFFF; border:1px solid var(--line); border-radius:12px;
+    padding:28px 32px; margin:22px 0; box-shadow:var(--shadow); overflow-x:auto;
+  }
+  .diagram svg{ max-width:100%; width:auto; height:auto; display:block; margin:0 auto; }
+  .diagram-caption{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft);
+    margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);
+  }
+
+  /* ---------- dimension header ---------- */
+  .dim{ margin-top:36px; }
+  .dim:first-child{ margin-top:0; }
+  .dim-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .dim-head h3{ font-size:18px; }
+  .route{
+    font-size:12.5px; font-weight:400; color:var(--ink-soft);
+    display:inline-block; margin-bottom:14px;
+  }
+
+  ul.plain{ padding-left:20px; margin:0 0 14px; }
+  ul.plain li{ margin-bottom:8px; max-width:60ch; }
+  ul.plain li::marker{ color:var(--ink-soft); }
+
+  footer{
+    padding:32px 0 0; margin-top:24px; border-top:1px solid var(--line);
+    font-size:13px; color:var(--ink-soft);
+  }
+
+  /* ---------- interactive demo shared bits ---------- */
+  .demo-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'Noto Sans SC',sans-serif; font-size:13px; font-weight:600;
+    color:var(--auto); background:var(--auto-soft); border:1px solid var(--auto);
+    border-radius:8px; padding:7px 14px; cursor:pointer; margin:6px 0 20px;
+  }
+  .demo-btn:hover{ opacity:.82; }
+  .demo-cta-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'Noto Sans SC',sans-serif; font-size:14px; font-weight:700;
+    color:#fff; background:#009688; border:none;
+    border-radius:9px; padding:12px 20px; cursor:pointer; box-shadow:var(--shadow);
+  }
+  .demo-cta-btn:hover{ opacity:.9; }
+  .demo-close{
+    border:none; background:none; color:var(--ink-soft); font-size:22px; cursor:pointer; line-height:1;
+    padding:4px;
+  }
+  .demo-field{ margin-bottom:14px; }
+  .demo-field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:6px; }
+  .demo-select, .demo-input, .demo-textarea{
+    width:100%; font-family:'Noto Sans SC',sans-serif; font-size:13.5px; color:var(--ink);
+    background:var(--paper); border:1px solid var(--line); border-radius:6px; padding:8px 10px;
+  }
+  .demo-textarea{ min-height:84px; resize:vertical; line-height:1.6; }
+  .demo-chip-row{ display:flex; flex-wrap:wrap; gap:6px; }
+  .demo-chip{
+    font-size:12px; padding:3px 10px; border-radius:999px;
+    background:var(--auto-soft); color:var(--auto); border:1px solid var(--auto);
+  }
+  .demo-edited-badge{
+    display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600;
+    color:var(--manual); background:var(--manual-soft); border-radius:999px; padding:2px 9px; margin-left:8px;
+  }
+  .demo-hint{ font-size:12px; color:var(--ink-soft); margin:0 0 14px; }
+  .demo-toast{
+    position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); font-size:13px; padding:10px 18px; border-radius:999px;
+    box-shadow:var(--shadow); z-index:300; opacity:0; pointer-events:none; transition:opacity .2s;
+  }
+  .demo-toast.show{ opacity:1; }
+
+  /* ---------- V3 page-chrome replica ---------- */
+  .v3-overlay{
+    position:fixed; inset:0; background:rgba(15,20,18,.6);
+    display:flex; align-items:center; justify-content:center;
+    padding:18px; z-index:100;
+  }
+  .v3-overlay[hidden]{ display:none; }
+  .v3-panel{
+    position:relative; background:#f5f7fa; border-radius:12px; box-shadow:var(--shadow);
+    width:100%; max-width:1280px; height:min(880px,94vh);
+    display:flex; flex-direction:column; overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial,sans-serif;
+    color:#1f2937;
+  }
+  .v3-panel-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+    padding:12px 18px; background:#fff; border-bottom:1px solid #e5e7eb; flex-shrink:0;
+  }
+  .v3-tabs{ display:flex; gap:22px; padding:0 18px; background:#fff; border-bottom:1px solid #e5e7eb; flex-shrink:0; overflow-x:auto; }
+  .v3-tab{
+    font-size:13px; font-weight:500; color:#6b7280; background:none; border:none;
+    padding:10px 2px; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .v3-tab.active{ color:#009688; border-bottom-color:#009688; font-weight:600; }
+  .v3-new-badge{
+    font-size:10px; font-weight:700; color:#fff; background:#f97316;
+    border-radius:999px; padding:1px 6px; line-height:1.5;
+  }
+  .v3-body{ flex:1; overflow:auto; padding:14px 18px 24px; }
+  .v3-view[hidden]{ display:none; }
+  .v3-card{ background:#fff; border-radius:6px; padding:14px 16px; margin-bottom:12px; box-shadow:0 1px 2px rgba(15,20,18,.05); }
+
+  .v3-pill-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .v3-pill{
+    font-size:12.5px; font-weight:500; padding:6px 14px; border-radius:999px;
+    background:#f1f5f9; color:#475569; border:1px solid transparent; cursor:pointer;
+  }
+  .v3-pill[data-pill="total"].active{ background:#2563eb; color:#fff; }
+  .v3-pill[data-pill="pending"].active{ background:#f97316; color:#fff; }
+  .v3-pill[data-pill="reviewing"].active{ background:#22c55e; color:#fff; }
+  .v3-pill[data-pill="fastupi"]{ background:#fff; color:#ef4444; border-color:#fca5a5; }
+  .v3-pill[data-pill="fastupi"].active{ background:#ef4444; color:#fff; border-color:#ef4444; }
+
+  .v3-table-wrap{ overflow-x:auto; border:1px solid #e5e7eb; border-radius:6px; }
+  .v3-table{ width:100%; border-collapse:collapse; font-size:12.5px; white-space:nowrap; }
+  .v3-table th{
+    background:#fafbfc; padding:9px 10px; text-align:left; border-bottom:1px solid #e5e7eb;
+    color:#6b7280; font-weight:600;
+  }
+  .v3-table td{ padding:9px 10px; border-bottom:1px solid #f1f5f9; color:#1f2937; }
+  .v3-table tbody tr:hover td{ background:#f8fafc; }
+  .v3-table tbody tr:last-child td{ border-bottom:none; }
+
+  .v3-ntag{
+    display:inline-flex; align-items:center; font-size:12px; padding:1px 8px;
+    border-radius:4px; border:1px solid transparent; font-weight:500; white-space:nowrap;
+  }
+  .v3-ntag--info{ background:#e6f4ff; border-color:#91caff; color:#1890ff; }
+  .v3-ntag--success{ background:#dcfce7; border-color:#bbf7d0; color:#18a058; }
+  .v3-ntag--warning{ background:#fef3c7; border-color:#fde68a; color:#d97706; }
+  .v3-ntag--error{ background:#fee2e2; border-color:#fecaca; color:#d03050; }
+  .v3-ntag--default{ background:#f1f5f9; border-color:#e2e8f0; color:#64748b; }
+
+  .v3-btn{
+    font-family:inherit; font-size:12.5px; font-weight:500; padding:5px 13px;
+    border-radius:4px; cursor:pointer; border:1px solid transparent; white-space:nowrap;
+  }
+  .v3-btn--primary{ background:#009688; color:#fff; }
+  .v3-btn--success{ background:#18a058; color:#fff; }
+  .v3-btn--warning{ background:#f0a020; color:#fff; }
+  .v3-btn--error{ background:#d03050; color:#fff; }
+  .v3-btn--error-secondary{ background:#fef2f2; color:#d03050; border-color:#fecaca; }
+  .v3-btn--default{ background:#fff; color:#374151; border-color:#d1d5db; }
+  .v3-btn--text{ background:none; color:#2563eb; border:none; padding:5px 4px; }
+  .v3-btn + .v3-btn{ margin-left:6px; }
+  .v3-row-actions{ display:flex; flex-direction:column; gap:4px; align-items:flex-start; }
+  .v3-row-actions .v3-btn{ margin-left:0; }
+
+  .v3-search-grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:10px 14px;
+    margin-bottom:12px;
+  }
+  .v3-search-grid .demo-field{ margin-bottom:0; }
+
+  .v3-modal-mask{
+    position:absolute; inset:0; background:rgba(15,20,18,.42);
+    display:flex; align-items:center; justify-content:center; padding:20px; z-index:10;
+  }
+  .v3-modal-mask[hidden]{ display:none; }
+  .v3-modal-mask + .v3-modal-mask{ z-index:20; }
+  .v3-modal-card{
+    background:#fff; border-radius:8px; box-shadow:0 12px 32px rgba(15,20,18,.28);
+    width:100%; max-width:880px; max-height:92%; overflow-y:auto; color:#1f2937;
+  }
+  .v3-summary-row{ display:flex; flex-wrap:wrap; padding:14px 18px; border-bottom:1px solid #f1f5f9; }
+  .v3-summary-item{ padding:0 16px; border-right:1px solid #e5e7eb; font-size:12.5px; }
+  .v3-summary-item:last-child{ border-right:none; }
+  .v3-summary-item .label{ color:#9ca3af; margin-right:4px; }
+  .v3-detail-tabs{ display:flex; gap:4px; padding:10px 18px 0; }
+  .v3-detail-tab{
+    font-size:12.5px; padding:7px 14px; border:1px solid #e5e7eb; border-bottom:none;
+    border-radius:6px 6px 0 0; background:#f8fafc; color:#6b7280; cursor:default;
+  }
+  .v3-detail-tab.active{ background:#fff; color:#009688; font-weight:600; border-bottom:1px solid #fff; margin-bottom:-1px; }
+  .v3-field-grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px 18px;
+    font-size:12.5px; padding:14px 18px; border-bottom:1px dashed #e5e7eb;
+  }
+  .v3-field-grid .label{ color:#9ca3af; }
+  .v3-action-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:14px 18px; }
+  @media (max-width:560px){ .v3-action-row{ grid-template-columns:1fr; } }
+  .v3-action-card{ border-radius:8px; padding:12px 14px; }
+  .v3-action-card--primary{ background:#eff6ff; }
+  .v3-action-card--secondary{ background:#f8fafc; }
+  .v3-action-card strong{ display:block; margin-bottom:8px; font-size:12.5px; color:#374151; }
+
+  /* ---------- stats chart ---------- */
+  .v3-stat-total-num{ font-size:28px; font-weight:700; color:#009688; line-height:1.1; font-variant-numeric:tabular-nums; }
+  .v3-stat-total-label{ font-size:12px; color:#9ca3af; margin-top:4px; }
+  .v3-stat-bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .v3-stat-bar-row:last-child{ margin-bottom:0; }
+  .v3-stat-bar-label{ width:150px; flex-shrink:0; font-size:12.5px; color:#374151; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .v3-stat-bar-track{ flex:1; background:#f1f5f9; border-radius:4px; height:18px; overflow:hidden; }
+  .v3-stat-bar-fill{ background:#009688; height:100%; border-radius:4px; min-width:2px; }
+  .v3-stat-bar-value{ width:118px; flex-shrink:0; font-size:12px; color:#374151; font-variant-numeric:tabular-nums; }
+</style>
+
+<div class="navbar">
+  <div class="page">
+    <ul class="navlist">
+      <li><a href="#purpose">目的</a></li>
+      <li><a href="#intro">需求介绍</a></li>
+      <li><a href="#logic">逻辑变更</a></li>
+      <li><a href="#design">交互设计</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="page">
+
+  <header class="hero">
+    <div class="eyebrow"><span class="dot"></span>讨论稿 · 出款业务 · V3中台</div>
+    <h1 class="title">出款原因标签化方案</h1>
+    <p class="subtitle">拦截、驳回原因由自由文本改为标签化选择，现有拦截与审核流程保持不变。</p>
+  </header>
+
+  <section id="purpose">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2 class="sec-title">需求目的</h2>
+    </div>
+    <div class="diff">
+      <div class="diff-card diff-before">
+        <span class="diff-label">现状</span>
+        <p>拒绝 / 拦截原因为自由文本</p>
+      </div>
+      <div class="diff-card diff-after">
+        <span class="diff-label">方案</span>
+        <p>改为从预设标签中选择</p>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  A1[自动拦截原因不明确 · 校验顺序影响参考依据的准确性]
+  A1 --> B1[全量校验条件 · 完整记录未通过条件]
+  B1 --> C1[为人工审核提供准确参考 · 提升审核效率]
+
+  A2[人工驳回原因为手工填写 · 无法统计 · 会员话术需重复撰写]
+  A2 --> B2[驳回原因标签化 · 自动生成会员展示话术]
+  B2 --> C2[支持长期统计追踪]
+
+  classDef prob fill:#FBF0DF,stroke:#B5711A,color:#1C232B;
+  classDef need fill:#F3F6F4,stroke:#5B6570,color:#1C232B;
+  classDef goal fill:#E5F4F1,stroke:#0E8C7E,color:#1C232B;
+  class A1,A2 prob;
+  class B1,B2 need;
+  class C1,C2 goal;
+      </pre>
+      <div class="diagram-caption">自动拦截、人工审核的既有流程不变，仅改变"原因如何记录"</div>
+    </div>
+  </section>
+
+  <section id="intro">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2 class="sec-title">需求介绍</h2>
+    </div>
+    <div class="lanes">
+      <div class="lane lane-auto">
+        <h3><span class="tag tag-auto">自动</span>拦截原因</h3>
+        <ul>
+          <li>即未通过的条件本身，无需选择</li>
+        </ul>
+      </div>
+      <div class="lane lane-manual">
+        <h3><span class="tag tag-manual">人工</span>驳回原因</h3>
+        <ul>
+          <li>从标签库中选择，必填</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  subgraph AUTO["自动出款"]
+    A1[会员发起提现] --> A2[逐项校验全部条件]
+    A2 --> A2B{是否全部通过}
+    A2B -- 通过 --> A5[系统自动通过 · 出款]
+    A2B -- 未通过 --> A3[记录全部未通过条件]
+    A3 --> A4[转人工审核]
+  end
+  subgraph MANUAL["人工审核"]
+    M1[人工审核 · 参考系统校验结果] --> M2{审核结果}
+    M2 -- 通过 --> M6[人工通过 · 出款]
+    M2 -- 驳回 --> M3[选择驳回标签]
+    M3 --> M4[按商户语言自动填充标准文案]
+    M4 --> M5[提交 · 同步展示给会员]
+  end
+  A4 --> M1
+  M3 --> S[(出款原因管理页面 · 按驳回标签统计)]
+  classDef auto fill:#E5F4F1,stroke:#0E8C7E,color:#1C232B;
+  classDef manual fill:#FBF0DF,stroke:#B5711A,color:#1C232B;
+  classDef stat fill:#FFFFFF,stroke:#5B6570,color:#1C232B,stroke-dasharray: 3 3;
+  classDef pass fill:#E7F4E9,stroke:#3F8F5F,color:#1C232B;
+  class A1,A2,A2B,A3,A4 auto;
+  class M1,M2,M3,M4,M5 manual;
+  class S stat;
+  class A5,M6 pass;
+      </pre>
+      <div class="diagram-caption">自动拦截与人工驳回是两段独立流程，仅通过"转人工审核"衔接；统计仅基于人工驳回标签，自动校验结果只作为审核参考。</div>
+    </div>
+  </section>
+
+  <section id="logic">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2 class="sec-title">逻辑变更</h2>
+    </div>
+    <div class="dim">
+      <div class="dim-head"><span class="tag tag-auto">变更一</span><h3>命中即终止 → 全量校验</h3></div>
+
+      <div class="diagram-pair">
+        <div>
+          <span class="tag tag-neutral">原逻辑</span>
+          <div class="diagram">
+            <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  R0[出款申请] --> C1[校验条件一]
+  C1 -- 未通过 --> STOP1[拦截 · 终止后续校验]
+  C1 -- 通过 --> C2[校验条件二]
+  C2 -- 未通过 --> STOP2[拦截 · 终止后续校验]
+  C2 -- 通过 --> C3[逐条校验 · 以此类推]
+  classDef old fill:#F3F6F4,stroke:#5B6570,color:#1C232B;
+  classDef stop fill:#FBEAE7,stroke:#B5493B,color:#1C232B;
+  class R0,C1,C2,C3 old;
+  class STOP1,STOP2 stop;
+            </pre>
+            <div class="diagram-caption">命中首个未通过条件即终止，无法获知是否还存在其他问题</div>
+          </div>
+        </div>
+        <div>
+          <span class="tag tag-auto">新逻辑</span>
+          <div class="diagram">
+            <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  R[出款申请进入自动校验]
+  R --> C1[条件一]
+  R --> C2[条件二]
+  R --> C3[条件三]
+  R --> Cn[以此类推 · 全部条件]
+  C1 --> J[汇总本单校验结果]
+  C2 --> J
+  C3 --> J
+  Cn --> J
+  J --> LIST[记录全部未通过条件]
+  LIST --> Q[转人工审核 · 作为审核参考]
+  classDef auto fill:#E5F4F1,stroke:#0E8C7E,color:#1C232B;
+  class R,C1,C2,C3,Cn,J,LIST,Q auto;
+            </pre>
+            <div class="diagram-caption">全量校验后一次性获知全部未通过条件</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dim">
+      <div class="dim-head"><span class="tag tag-auto">变更二</span><h3>拦截原因作为参考依据，标签为最终驳回理由</h3></div>
+      <div class="diagram">
+        <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  RULE[未通过条件] --> REF[作为标签选择的参考依据]
+  REF --> TAG[人工参考后选择驳回标签]
+  TAG --> FINAL[正式驳回理由]
+  classDef auto fill:#E5F4F1,stroke:#0E8C7E,color:#1C232B;
+  classDef manual fill:#FBF0DF,stroke:#B5711A,color:#1C232B;
+  class RULE,REF auto;
+  class TAG,FINAL manual;
+        </pre>
+        <div class="diagram-caption">两者非自动映射关系，但人工选择标签时会参考拦截原因</div>
+      </div>
+    </div>
+
+    <div class="dim">
+      <div class="dim-head"><span class="tag tag-manual">变更三</span><h3>人工驳回：选择标签，语言自动匹配</h3></div>
+      <div class="diagram">
+        <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  L[标签库] --> P[选择一个标签 · 单选]
+  P --> Q[按商户语言自动填充]
+  Q --> E{是否编辑}
+  E -- 编辑 --> R[记录编辑痕迹]
+  classDef manual fill:#FBF0DF,stroke:#B5711A,color:#1C232B;
+  class L,P,Q,E,R manual;
+        </pre>
+      </div>
+    </div>
+
+    <p style="margin-top:28px;"><span class="tag tag-neutral">补充</span>&nbsp; 历史数据不迁移、不清洗，新旧数据分开统计</p>
+  </section>
+
+  <section id="design">
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h2 class="sec-title">交互设计</h2>
+    </div>
+
+    <div style="margin-bottom:32px;">
+      <button class="demo-cta-btn" onclick="window.__openV3Demo('workbench')">▶ 打开完整交互演示 · 基于V3提现订单管理页面还原</button>
+      <p class="demo-hint" style="margin-top:10px;">演示还原了真实的「出款员工操作台」「全部提现记录」页面结构与字段（含搜索栏、表格列、详情弹窗），并在此基础上加入本方案新增的拦截原因展示、标签选择、原因统计三处改动，可实际点击操作，非纯示意图。</p>
+    </div>
+
+    <div class="dim">
+      <div class="dim-head"><span class="tag tag-auto">模块</span><h3>配置</h3></div>
+      <span class="route">提现订单管理 · 新增页面「出款原因管理」</span>
+      <div class="diagram">
+        <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  subgraph PAGE["新页面 · 出款原因管理"]
+    T1[标签库模块] --> LIST[标签列表]
+    LIST --> MODAL[新增 / 编辑 · 弹窗操作]
+    MODAL --> TITLE[标题 · 用于选择与统计]
+    MODAL --> CONTENT[内容 · 用于回填驳回文案]
+    TITLE --> LANG[标题与内容按语言配置为一套]
+    CONTENT --> LANG
+    T2[原因统计模块] --> STAT[基于驳回标签统计]
+  end
+  subgraph OPS["出款员工操作台"]
+    R[执行驳回操作] -. 调用该标签库 .-> LIST
+  end
+  classDef manual fill:#FBF0DF,stroke:#B5711A,color:#1C232B;
+  classDef stat fill:#FFFFFF,stroke:#5B6570,color:#1C232B,stroke-dasharray: 3 3;
+  class T1,LIST,MODAL,TITLE,CONTENT,LANG,R manual;
+  class T2,STAT stat;
+        </pre>
+      </div>
+    </div>
+
+    <div class="dim">
+      <div class="dim-head"><span class="tag tag-manual">模块</span><h3>展示</h3></div>
+      <span class="route">提现订单管理 · 出款员工操作台 · 驳回弹窗</span>
+      <div class="diff">
+        <div class="diff-card diff-before">
+          <span class="diff-label">原控件</span>
+          <p>驳回原因仅一个输入框，需人工手动填写</p>
+        </div>
+        <div class="diff-card diff-after">
+          <span class="diff-label">新控件</span>
+          <p>输入框 + 标签下拉框；选择标签后默认在输入框生成对应话术，仍可编辑</p>
+        </div>
+      </div>
+      <div class="diagram">
+        <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  D1[执行驳回操作 · 打开驳回弹窗] --> D0[展示本单命中的拦截原因 · 可展示多个]
+  subgraph MODAL["驳回弹窗 · 输入框 + 标签下拉框"]
+    D0 --> D2[下拉框选择标签 · 单选]
+    D2 --> D3[参考拦截原因辅助判断]
+    D3 --> D4[按商户语言默认填充进输入框]
+    D4 --> D5{是否编辑输入框文案}
+    D5 -- 编辑 --> D6[记录编辑痕迹]
+    D5 -- 不编辑 --> D7[提交]
+    D6 --> D7
+  end
+  D7 --> D8[展示在会员的当前被拒提款订单记录中]
+  D7 --> D9[计入统计]
+  classDef manual fill:#FBF0DF,stroke:#B5711A,color:#1C232B;
+  classDef stat fill:#FFFFFF,stroke:#5B6570,color:#1C232B,stroke-dasharray: 3 3;
+  class D1,D0,D2,D3,D4,D5,D6,D7,D8 manual;
+  class D9 stat;
+        </pre>
+      </div>
+      <div class="diagram-pair">
+        <div>
+          <span class="tag tag-neutral">页面</span>
+          <strong style="margin-left:6px; font-size:15px;">出款员工操作台</strong>
+          <div class="diagram">
+            <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  O1[待审核 / 审核中 / 已拒绝 订单列表] --> C1[新增列 · 拦截原因 · 可展示多个]
+  O1 --> C2[备注列 · 人工备注 改为 拒绝标签（可点击查看标题与内容）]
+  classDef auto fill:#E5F4F1,stroke:#0E8C7E,color:#1C232B;
+  classDef manual fill:#FBF0DF,stroke:#B5711A,color:#1C232B;
+  class O1,C1 auto;
+  class C2 manual;
+            </pre>
+          </div>
+        </div>
+        <div>
+          <span class="tag tag-neutral">页面</span>
+          <strong style="margin-left:6px; font-size:15px;">全部提现记录</strong>
+          <div class="diagram">
+            <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  O2[待审核 / 审核中 / 已拒绝 订单列表] --> C3[新增列 · 拦截原因 · 可展示多个]
+  O2 --> C4[备注列 · 人工备注 改为 拒绝标签（可点击查看标题与内容）]
+  classDef auto fill:#E5F4F1,stroke:#0E8C7E,color:#1C232B;
+  classDef manual fill:#FBF0DF,stroke:#B5711A,color:#1C232B;
+  class O2,C3 auto;
+  class C4 manual;
+            </pre>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-caption">两个页面的待审核 / 审核中 / 已拒绝状态订单列表，均新增"拦截原因"列（可展示多个）；原"备注"列的人工备注改为展示"拒绝标签"，列表内仅展示当前页面语言的标题，点击可查看完整标题与内容。</div>
+    </div>
+
+    <div class="dim">
+      <div class="dim-head"><span class="tag tag-neutral">模块</span><h3>统计</h3></div>
+      <span class="route">提现订单管理 ·「出款原因管理」页面 · 原因统计模块</span>
+      <div class="diagram">
+        <pre class="mermaid">
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#F3F6F4','primaryBorderColor':'#DEE5E1','primaryTextColor':'#1C232B','lineColor':'#5B6570','fontFamily':'Noto Sans SC','fontSize':'13px'}}}%%
+flowchart TD
+  OLD[标签化上线前的历史数据 · 自由文本] -. 不计入拒绝归因 .-> T
+  T[驳回标签记录 · 标签化上线后] --> V1[按标签统计分布]
+  V1 --> F1[原因 · 驳回标签（点击查看标题与内容）]
+  V1 --> F2[数量]
+  V1 --> F3[占比]
+  V1 --> F4[对应的拦截原因 · 关联条件参考]
+  T --> V2[趋势分析]
+  T --> V3[下钻查看订单明细]
+  F1 --> PAGE[出款原因管理页面 · 拒绝归因分析]
+  F2 --> PAGE
+  F3 --> PAGE
+  F4 --> PAGE
+  V2 --> PAGE
+  V3 --> PAGE
+  classDef old fill:#F3F6F4,stroke:#5B6570,color:#1C232B,stroke-dasharray: 3 3;
+  classDef manual fill:#FBF0DF,stroke:#B5711A,color:#1C232B;
+  classDef auto fill:#E5F4F1,stroke:#0E8C7E,color:#1C232B;
+  classDef stat fill:#FFFFFF,stroke:#5B6570,color:#1C232B,stroke-dasharray: 3 3;
+  class OLD old;
+  class T,V1,F1,F2,F3,V2,V3 manual;
+  class F4 auto;
+  class PAGE stat;
+        </pre>
+        <div class="diagram-caption">拒绝归因统计以驳回标签为准，每条统计包含原因、数量、占比，并展示该标签对应的拦截原因作为关联参考；历史自由文本数据不计入拒绝归因，新旧数据分开统计。</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    出款原因标签化方案 · 讨论稿，尚未拍板落地细节 · V3中台 财务管理
+  </footer>
+
+</div>
+
+<div class="v3-overlay" id="v3Overlay" hidden>
+  <div class="v3-panel">
+    <div class="v3-panel-head">
+      <div>
+        <strong style="font-family:'Noto Serif SC',serif; font-size:15px;">提现订单管理</strong>
+        <span style="font-size:11.5px; color:#9ca3af; margin-left:10px;">交互演示 · 基于V3页面真实结构与字段还原（简化了部分与本方案无关的子组件）</span>
+      </div>
+      <button class="demo-close" id="v3Close" aria-label="关闭">&times;</button>
+    </div>
+
+    <div class="v3-tabs" id="v3Tabs">
+      <button class="v3-tab" data-view="dashboard">出款看板</button>
+      <button class="v3-tab" data-view="workbench">出款员工操作台</button>
+      <button class="v3-tab" data-view="dispatch">出款组别配置</button>
+      <button class="v3-tab" data-view="report">出款员工报表</button>
+      <button class="v3-tab" data-view="currentOrders">当前提现订单</button>
+      <button class="v3-tab" data-view="records">全部提现记录</button>
+      <button class="v3-tab" data-view="lib">出款原因管理<span class="v3-new-badge">新</span></button>
+    </div>
+
+    <div class="v3-body" id="v3Body">
+
+      <div class="v3-view" data-view="placeholder" hidden>
+        <div class="v3-card">
+          <p class="demo-hint" style="margin:0;">该页签与本次方案无关，演示中未还原。请切换到「出款员工操作台」「全部提现记录」或「出款原因管理」查看本方案的改动。</p>
+        </div>
+      </div>
+
+      <div class="v3-view" data-view="workbench" hidden>
+        <div class="v3-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="font-size:13px;">
+              <strong>个人状态</strong>
+              <span style="margin-left:14px; color:#6b7280;">当前状态：</span>
+              <span class="v3-ntag v3-ntag--success">上班-派单中</span>
+              <span style="margin-left:16px; color:#6b7280;">今日已工作时长：<strong>3h42m</strong></span>
+              <span style="margin-left:16px; color:#6b7280;">今日暂停次数：<strong>1</strong></span>
+            </div>
+            <div>
+              <button class="v3-btn v3-btn--warning" onclick="window.__v3Toast('已刷新（演示）')">⟳ 手动刷新</button>
+              <button class="v3-btn v3-btn--text" id="v3RuleBtn">提醒/规则</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="v3-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+            <strong style="font-size:13.5px;">我的审核订单</strong>
+            <div class="v3-pill-row" id="v3PillRow"></div>
+          </div>
+          <div class="v3-table-wrap">
+            <table class="v3-table">
+              <thead>
+                <tr>
+                  <th>商户</th><th>会员ID</th><th>订单号</th><th>提现大类</th><th>申请时间</th><th>币种</th>
+                  <th>提现倍数</th><th>提现次数</th><th>手续费</th><th>提现金额</th><th>实际到账金额</th>
+                  <th>审核状态</th><th style="color:#009688;">拦截原因 <span class="v3-new-badge">新增</span></th>
+                  <th>审核时长</th><th>指派人</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="v3WorkbenchBody"></tbody>
+            </table>
+          </div>
+          <p class="demo-hint" style="margin:10px 0 0;">为聚焦本方案，演示表格省略了"第三方详情""指派备注"两个与本方案无关的列；其余列顺序、命名均与真实页面一致。</p>
+        </div>
+      </div>
+
+      <div class="v3-view" data-view="records" hidden>
+        <div class="v3-card">
+          <div class="v3-search-grid">
+            <div class="demo-field"><label>商户</label><select class="demo-select" id="v3fTenant"><option value="">全部</option></select></div>
+            <div class="demo-field"><label>提现大类</label><select class="demo-select"><option>全部</option></select></div>
+            <div class="demo-field"><label>通道ID/名称</label><select class="demo-select"><option>全部</option></select></div>
+            <div class="demo-field"><label>会员ID</label><input class="demo-input" id="v3fUserId" placeholder="请输入会员ID" /></div>
+            <div class="demo-field"><label>订单号</label><input class="demo-input" placeholder="请输入订单号" /></div>
+            <div class="demo-field"><label>订单状态</label><select class="demo-select" id="v3fState"><option value="">全部</option></select></div>
+            <div class="demo-field"><label>操作人</label><input class="demo-input" placeholder="请输入操作人" /></div>
+            <div class="demo-field"><label>提现金额</label><div style="display:flex; gap:6px;"><input class="demo-input" placeholder="最小"/><input class="demo-input" placeholder="最大"/></div></div>
+            <div class="demo-field"><label>提现次数</label><div style="display:flex; gap:6px;"><input class="demo-input" placeholder="最小"/><input class="demo-input" placeholder="最大"/></div></div>
+            <div class="demo-field"><label>提现倍数</label><div style="display:flex; gap:6px;"><input class="demo-input" placeholder="最小"/><input class="demo-input" placeholder="最大"/></div></div>
+            <div class="demo-field"><label>申请时间</label><input class="demo-input" placeholder="今天" /></div>
+            <div class="demo-field"><label>完成时间</label><input class="demo-input" placeholder="请选择区间" /></div>
+          </div>
+          <div>
+            <button class="v3-btn v3-btn--primary" id="v3RecordsFilterBtn">查询</button>
+            <button class="v3-btn v3-btn--default" id="v3RecordsResetBtn">重置</button>
+          </div>
+        </div>
+
+        <div class="v3-card">
+          <p class="demo-hint" style="margin-bottom:10px;">本页面可查全部提现订单</p>
+          <div class="v3-table-wrap">
+            <table class="v3-table">
+              <thead>
+                <tr>
+                  <th>商户</th><th>会员ID</th><th>订单号</th><th>提现大类</th><th>银行卡详细</th><th>币种</th>
+                  <th>提现倍数</th><th>提现次数</th><th>手续费</th><th>提现金额</th><th>实际到账金额</th>
+                  <th>订单状态</th><th>订单时间</th><th>第三方详细</th>
+                  <th style="color:#009688;">拦截原因 <span class="v3-new-badge">新增</span></th>
+                  <th style="color:var(--manual);">备注信息 <span class="v3-new-badge" style="background:var(--manual);">改造</span></th>
+                  <th>操作人</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="v3RecordsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="v3-view" data-view="lib" hidden>
+        <div class="v3-tabs" style="padding:0; margin-bottom:14px; background:none;">
+          <button class="v3-tab" data-libtab="tags">标签库</button>
+          <button class="v3-tab" data-libtab="stats">原因统计</button>
+        </div>
+
+        <div id="v3LibTagsBody">
+          <div class="v3-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;">
+              <p class="demo-hint" style="margin:0;">标签由运营配置：标题与内容按语言配置为一套（此处以中 / 英演示），列表与统计默认按中文展示。</p>
+              <button class="v3-btn v3-btn--primary" id="v3LibAddBtn">+ 新增标签</button>
+            </div>
+            <div class="v3-table-wrap">
+              <table class="v3-table">
+                <thead><tr><th>标题</th><th>内容预览（中文）</th><th style="width:90px;">操作</th></tr></thead>
+                <tbody id="v3LibList"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="v3LibStatsBody" hidden>
+          <div class="v3-card">
+            <p class="demo-hint" style="margin:0 0 12px;">拒绝归因统计以驳回标签为准；历史自由文本数据不计入。数据随「出款员工操作台」的驳回演示实时更新。</p>
+
+            <div style="display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+              <div class="demo-field" style="margin-bottom:0;"><label>开始日期</label><input class="demo-input" type="date" id="v3StatsFrom" /></div>
+              <div class="demo-field" style="margin-bottom:0;"><label>结束日期</label><input class="demo-input" type="date" id="v3StatsTo" /></div>
+              <button class="v3-btn v3-btn--default" data-range="7">近7天</button>
+              <button class="v3-btn v3-btn--default" data-range="30">近30天</button>
+              <button class="v3-btn v3-btn--default" data-range="all">全部</button>
+              <button class="v3-btn v3-btn--primary" id="v3StatsQueryBtn">查询</button>
+            </div>
+
+            <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:8px;">
+              <div id="v3StatsTotal" style="min-width:110px;"></div>
+              <div style="flex:1; min-width:320px;">
+                <p class="demo-hint" style="margin:0 0 6px;">按日期堆叠柱状图 · 多个原因的历史累计数据</p>
+                <div id="v3StatsChart" style="display:flex; align-items:flex-end; gap:14px; height:160px; padding-bottom:4px; overflow-x:auto;"></div>
+                <div id="v3StatsLegend" style="display:flex; flex-wrap:wrap; gap:12px; margin-top:10px;"></div>
+              </div>
+            </div>
+
+            <div class="v3-table-wrap">
+              <table class="v3-table">
+                <thead><tr><th>原因</th><th>数量</th><th>占比</th><th>对应的拦截原因（关联参考）</th></tr></thead>
+                <tbody id="v3StatsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="v3-modal-mask" id="v3RuleMask" hidden>
+      <div class="v3-modal-card" style="max-width:460px; padding:20px;">
+        <h4 style="font-family:'Noto Serif SC',serif; font-size:15px; margin-bottom:12px;">提醒/规则</h4>
+        <div style="background:#f8fafc; border:1px solid #e5edf7; border-radius:8px; padding:12px 14px; font-size:12.5px; line-height:1.9; color:#374151;">
+          1、超时提醒：单个订单处理超时时间为5分钟<br/>
+          2、暂停规则：若暂停的话，当前手里的订单会重新返回派发队列，待暂停完成后，重新派发新订单<br/>
+          3、打卡规则：打卡上班后需点击开始派单才会派发出款单，下班需完成手里的订单或暂停清空后再打卡下班<br/>
+          4、订单处理规则：若发现有处理不了的订单，可以直接指派给自己的组长处理，并表明原因
+        </div>
+        <div style="text-align:right; margin-top:14px;"><button class="v3-btn v3-btn--default" id="v3RuleCloseBtn">关 闭</button></div>
+      </div>
+    </div>
+
+    <div class="v3-modal-mask" id="v3TagPreviewMask" hidden>
+      <div class="v3-modal-card" style="max-width:420px; padding:20px;">
+        <h4 style="font-family:'Noto Serif SC',serif; font-size:15px; margin-bottom:6px;">拒绝标签详情</h4>
+        <p class="demo-hint">列表中仅展示当前页面语言的标题，点击查看完整标题与内容；标签本身按语言配置，可在下方切换语言查看。</p>
+        <div class="v3-tabs" style="padding:0 0 8px; background:none;" id="v3TagPreviewLangTabs">
+          <button class="v3-tab" data-lang="zh">中文</button>
+          <button class="v3-tab" data-lang="en">English</button>
+        </div>
+        <div class="demo-field">
+          <label>标题</label>
+          <div id="v3TagPreviewTitle" style="font-weight:600;"></div>
+        </div>
+        <div class="demo-field">
+          <label>内容</label>
+          <div id="v3TagPreviewContent" style="white-space:normal; line-height:1.7; color:#374151;"></div>
+        </div>
+        <div style="text-align:right; margin-top:8px;"><button class="v3-btn v3-btn--default" id="v3TagPreviewCloseBtn">关 闭</button></div>
+      </div>
+    </div>
+
+    <div class="v3-modal-mask" id="v3DetailMask" hidden>
+      <div class="v3-modal-card" id="v3DetailCard"></div>
+    </div>
+
+    <div class="v3-modal-mask" id="v3ReasonMask" hidden>
+      <div class="v3-modal-card" style="max-width:520px; padding:20px;">
+        <h4 style="font-family:'Noto Serif SC',serif; font-size:15px; margin-bottom:6px;">确认取消出款</h4>
+        <p class="demo-hint">取消后该订单将标记为已拒绝，请填写取消原因。</p>
+        <div class="demo-field">
+          <label>本单命中的拦截原因（可展示多个 · 仅供参考）</label>
+          <div class="demo-chip-row" id="v3ReasonChips"></div>
+        </div>
+        <div class="demo-field">
+          <label>驳回标签（单选 · 必填 · 标签名称按后台展示语言显示）</label>
+          <select class="demo-select" id="v3ReasonTagSelect"></select>
+        </div>
+        <div class="demo-field">
+          <label>取消原因（内容按语言配置，选择标签后自动填充 · 可编辑 · 会按会员当前语言展示对应内容）<span id="v3ReasonEditedBadge" class="demo-edited-badge" hidden>已编辑</span></label>
+          <div class="v3-tabs" style="padding:0 0 8px; background:none;" id="v3ReasonLangTabs">
+            <button class="v3-tab" data-lang="zh">中文</button>
+            <button class="v3-tab" data-lang="en">English</button>
+          </div>
+          <textarea class="demo-textarea" id="v3ReasonText" placeholder="请选择驳回标签"></textarea>
+        </div>
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
+          <button class="v3-btn v3-btn--default" id="v3ReasonCloseBtn">关 闭</button>
+          <button class="v3-btn v3-btn--error" id="v3ReasonConfirmBtn">确 认</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="v3-modal-mask" id="v3LibFormMask" hidden>
+      <div class="v3-modal-card" style="max-width:480px; padding:20px;">
+        <h4 style="font-family:'Noto Serif SC',serif; font-size:15px; margin-bottom:6px;" id="v3LibFormTitle">新增标签</h4>
+        <p class="demo-hint">标题与内容按语言配置为一套，切换语言 Tab 分别填写。</p>
+        <div class="v3-tabs" style="padding:0 0 8px; background:none;">
+          <button class="v3-tab" data-lang="zh">中文</button>
+          <button class="v3-tab" data-lang="en">English</button>
+        </div>
+        <div class="demo-field">
+          <label>标题</label>
+          <input class="demo-input" id="v3LibTitle" type="text" />
+        </div>
+        <div class="demo-field">
+          <label>内容</label>
+          <textarea class="demo-textarea" id="v3LibContent"></textarea>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button class="v3-btn v3-btn--primary" id="v3LibSaveBtn">保存</button>
+          <button class="v3-btn v3-btn--default" id="v3LibCancelBtn">取消</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="demo-toast" id="demoToast"></div>
+
+<script>
+(function(){
+  /* ================= 共享数据 ================= */
+  var demoTags = [
+    { id:'t1', i18n:{ zh:{ title:'身份信息不完整', content:'很抱歉，我们暂无法完成此次出款，请补充完善您的身份认证信息后重新申请。' }, en:{ title:'Incomplete Identity Info', content:'Sorry, we are unable to process this withdrawal. Please complete your identity verification and try again.' } } },
+    { id:'t2', i18n:{ zh:{ title:'存在异常交易风险', content:'系统检测到您的账户存在异常交易风险，本次出款申请已被驳回，如有疑问请联系客服。' }, en:{ title:'Abnormal Transaction Risk', content:'Our system detected abnormal transaction risk on your account. This withdrawal has been declined. Please contact support if you have questions.' } } },
+    { id:'t3', i18n:{ zh:{ title:'账户余额与提现金额不符', content:'您的账户可用余额不足以完成本次提现，请核对余额后再次提交申请。' }, en:{ title:'Insufficient Balance', content:'Your available balance is insufficient for this withdrawal. Please check your balance and try again.' } } },
+    { id:'t4', i18n:{ zh:{ title:'打码倍数未达标准', content:'您的账户当前打码倍数尚未达到出款标准，请继续投注后再次申请提现。' }, en:{ title:'Wagering Not Met', content:'Your wagering multiple has not yet reached the withdrawal requirement. Please continue playing before requesting again.' } } },
+    { id:'t5', i18n:{ zh:{ title:'同设备关联风险', content:'系统检测到该设备关联多个账户，存在合规风险，本次出款申请已被驳回。' }, en:{ title:'Shared Device Risk', content:'Our system detected this device is linked to multiple accounts, posing a compliance risk. This withdrawal has been declined.' } } }
+  ];
+  var STATS_LANG = 'zh';
+  function tagName(tag){ return tag.i18n[STATS_LANG].title; }
+  var TAG_PALETTE = ['#009688','#2563eb','#f59e0b','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+  function colorForTag(title){
+    var idx = demoTags.map(function(t){ return tagName(t); }).indexOf(title);
+    return TAG_PALETTE[idx >= 0 ? idx % TAG_PALETTE.length : 0];
+  }
+  var seq = 0;
+
+  var STATE_MAP = {
+    0:{ text:'待审核', cls:'warning' },
+    1:{ text:'已通过', cls:'success' },
+    2:{ text:'已拒绝', cls:'error' },
+    3:{ text:'已提交', cls:'warning' },
+    4:{ text:'出款中', cls:'default' },
+    5:{ text:'出款成功', cls:'default' },
+    6:{ text:'出款失败', cls:'default' }
+  };
+
+  var workbenchOrders = [
+    { orderNo:'WD202609100001', tenant:'ABC888', userId:'100234', category:'银行卡', currency:'INR', multiple:'1.2', count:3, fee:'2.00', amount:'500.00', actual:'498.00', applyTime:'2026-09-10 09:12', auditState:0, auditMinutes:0, assigner:'系统', reasons:['账号余额不足标准','同设备数超限'] },
+    { orderNo:'WD202609100002', tenant:'ABC888', userId:'100561', category:'USDT', currency:'USDT', multiple:'0.8', count:1, fee:'1.00', amount:'1200.00', actual:'1194.00', applyTime:'2026-09-10 09:20', auditState:0, auditMinutes:0, assigner:'系统', reasons:['打码倍数未达标'] },
+    { orderNo:'WD202609100003', tenant:'XYZPay', userId:'100789', category:'银行卡', currency:'VND', multiple:'2.5', count:5, fee:'3.50', amount:'800.00', actual:'796.50', applyTime:'2026-09-10 08:55', auditState:1, auditMinutes:6, assigner:'系统', reasons:['当日盈利金额超限','历史红包领取总额超限'] }
+  ];
+
+
+  var recordsOrders = [
+    { orderNo:'WD202608200011', tenant:'ABC888', userId:'100098', category:'银行卡', bank:'HDFC •••• 4821 · 已核实', currency:'INR', multiple:'1.0', count:2, fee:'1.50', amount:'300.00', actual:'298.50', state:2, applyTime:'2026-08-20 14:02', completeTime:'2026-08-20 14:20', thirdParty:'人工取消', reasons:['身份信息初审未过'], tagId:'t1', tagTitle:'身份信息不完整', manualRemark:null, orderRemark:'--', operator:'李强' },
+    { orderNo:'WD202609100006', tenant:'ABC888', userId:'100612', category:'银行卡', bank:'ICICI •••• 3390 · 已核实', currency:'INR', multiple:'1.1', count:2, fee:'1.80', amount:'450.00', actual:'448.20', state:0, applyTime:'2026-09-10 10:05', completeTime:'--', thirdParty:'--', reasons:['首存金额不足'], tagTitle:null, manualRemark:null, orderRemark:'--', operator:'--' },
+    { orderNo:'WD202609090010', tenant:'ABC888', userId:'100310', category:'银行卡', bank:'SBI •••• 7742 · 已核实', currency:'INR', multiple:'1.0', count:1, fee:'1.00', amount:'260.00', actual:'259.00', state:1, applyTime:'2026-09-09 16:40', completeTime:'2026-09-09 16:55', thirdParty:'通道自动出款', reasons:null, tagTitle:null, manualRemark:null, orderRemark:'--', operator:'系统' },
+    { orderNo:'WD202609080021', tenant:'XYZPay', userId:'100177', category:'USDT', bank:'TRC20 •••• 6b04', currency:'USDT', multiple:'1.6', count:3, fee:'2.00', amount:'700.00', actual:'698.00', state:5, applyTime:'2026-09-08 09:12', completeTime:'2026-09-08 09:30', thirdParty:'PayGate · 成功', reasons:null, tagTitle:null, manualRemark:null, orderRemark:'--', operator:'系统' }
+  ];
+
+  /* 标签化上线后的历史驳回数据（用于原因统计的柱状图/时间段查询演示） */
+  var HIST_SEED = [
+    ['2026-09-01','t1',['身份信息初审未过']], ['2026-09-01','t2',['同设备数超限']], ['2026-09-01','t2',['当日盈利金额超限']],
+    ['2026-09-02','t3',['账号余额不足标准']], ['2026-09-02','t4',['打码倍数未达标']],
+    ['2026-09-03','t2',['同设备数超限']], ['2026-09-03','t2',['历史红包领取总额超限']], ['2026-09-03','t5',['同设备数超限']],
+    ['2026-09-04','t1',['身份信息初审未过']], ['2026-09-04','t3',['账号余额不足标准']],
+    ['2026-09-05','t4',['打码倍数未达标']], ['2026-09-05','t4',['打码倍数未达标']], ['2026-09-05','t2',['当日盈利金额超限']],
+    ['2026-09-06','t5',['同设备数超限']], ['2026-09-06','t1',['身份信息初审未过']],
+    ['2026-09-07','t3',['账号余额不足标准']], ['2026-09-07','t3',['首存金额不足']], ['2026-09-07','t4',['打码倍数未达标']],
+    ['2026-09-08','t2',['同设备数超限']], ['2026-09-08','t5',['最后一次充值时间过久']], ['2026-09-08','t5',['同设备数超限']],
+    ['2026-09-09','t1',['身份信息初审未过']], ['2026-09-09','t3',['账号余额不足标准']], ['2026-09-09','t4',['打码倍数未达标']]
+  ];
+  var TAG_BY_ID = {};
+  demoTags.forEach(function(t){ TAG_BY_ID[t.id] = t; });
+  HIST_SEED.forEach(function(seed, i){
+    var n = i + 1, date = seed[0], tag = TAG_BY_ID[seed[1]], reasons = seed[2];
+    recordsOrders.push({
+      orderNo:'WD' + date.replace(/-/g,'') + String(n).padStart(4,'0'),
+      tenant: n % 2 === 0 ? 'XYZPay' : 'ABC888',
+      userId: String(100000 + n * 7),
+      category: n % 3 === 0 ? 'USDT' : '银行卡',
+      bank: n % 3 === 0 ? ('TRC20 •••• ' + (1000 + n)) : ('HDFC •••• ' + (2000 + n) + ' · 已核实'),
+      currency: n % 3 === 0 ? 'USDT' : (n % 2 === 0 ? 'VND' : 'INR'),
+      multiple: (1 + (n % 5) * 0.3).toFixed(1),
+      count: 1 + (n % 4),
+      fee: (1 + n % 3).toFixed(2),
+      amount: (200 + n * 37).toFixed(2),
+      actual: (198 + n * 37).toFixed(2),
+      state: 2,
+      applyTime: date + ' ' + String(9 + n % 8).padStart(2,'0') + ':' + String((n * 7) % 60).padStart(2,'0'),
+      completeTime: date + ' ' + String(10 + n % 8).padStart(2,'0') + ':00',
+      thirdParty:'人工取消',
+      reasons: reasons,
+      tagId: tag.id,
+      tagTitle: tagName(tag),
+      manualRemark: null,
+      orderRemark:'--',
+      operator: ['王晓丽','李强','张伟'][n % 3]
+    });
+  });
+
+  var currentPillFilter = 'all';
+  var currentReasonOrderNo = null;
+  var libEditingId = null;
+  var libEditingLang = 'zh';
+  var libEditingDraft = { zh:'', en:'' };
+
+  /* ================= 顶层弹窗控制 ================= */
+  var overlay = document.getElementById('v3Overlay');
+  var closeBtn = document.getElementById('v3Close');
+  var tabBtns = [].slice.call(document.getElementById('v3Tabs').querySelectorAll('.v3-tab'));
+  var views = [].slice.call(document.getElementById('v3Body').querySelectorAll('.v3-view'));
+
+  function switchView(view){
+    tabBtns.forEach(function(t){ t.classList.toggle('active', t.dataset.view === view); });
+    var known = ['workbench','records','lib'];
+    views.forEach(function(v){
+      if(known.indexOf(view) >= 0){ v.hidden = v.dataset.view !== view; }
+      else { v.hidden = v.dataset.view !== 'placeholder'; }
+    });
+  }
+  tabBtns.forEach(function(t){
+    t.addEventListener('click', function(){ switchView(t.dataset.view); });
+  });
+
+  function openV3Demo(view, subTab){
+    overlay.hidden = false;
+    renderWorkbenchTable();
+    renderRecordsTable();
+    renderLibList();
+    switchView(view || 'workbench');
+    if(view === 'lib') switchLibTab(subTab || 'tags');
+  }
+  function closeV3Demo(){
+    overlay.hidden = true;
+    document.getElementById('v3DetailMask').hidden = true;
+    document.getElementById('v3ReasonMask').hidden = true;
+    document.getElementById('v3LibFormMask').hidden = true;
+    document.getElementById('v3RuleMask').hidden = true;
+  }
+  closeBtn.addEventListener('click', closeV3Demo);
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) closeV3Demo(); });
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape') return;
+    if(!document.getElementById('v3ReasonMask').hidden){ closeReasonModal(); return; }
+    if(!document.getElementById('v3DetailMask').hidden){ closeDetailModal(); return; }
+    if(!document.getElementById('v3LibFormMask').hidden){ document.getElementById('v3LibFormMask').hidden = true; return; }
+    if(!document.getElementById('v3RuleMask').hidden){ document.getElementById('v3RuleMask').hidden = true; return; }
+    if(!overlay.hidden) closeV3Demo();
+  });
+  window.__openV3Demo = openV3Demo;
+
+  /* ================= 提醒/规则 ================= */
+  document.getElementById('v3RuleBtn').addEventListener('click', function(){ document.getElementById('v3RuleMask').hidden = false; });
+  document.getElementById('v3RuleCloseBtn').addEventListener('click', function(){ document.getElementById('v3RuleMask').hidden = true; });
+
+  /* ================= 出款员工操作台 ================= */
+  function chipsHtml(list, empty){
+    if(!list || !list.length) return '<span style="color:#c4c9d0;">' + (empty || '--') + '</span>';
+    return '<div class="demo-chip-row">' + list.map(function(r){ return '<span class="demo-chip">' + r + '</span>'; }).join('') + '</div>';
+  }
+
+  function renderPillRow(){
+    var total = workbenchOrders.length;
+    var pending = workbenchOrders.filter(function(o){ return o.auditState === 0; }).length;
+    var reviewing = workbenchOrders.filter(function(o){ return o.auditState === 1; }).length;
+    var pills = [
+      { key:'all', label:'总单数 ' + total, pill:'total' },
+      { key:'pending', label:'待审核 ' + pending, pill:'pending' },
+      { key:'reviewing', label:'审核中 ' + reviewing, pill:'reviewing' },
+      { key:'fastupi', label:'FASTUPI 0', pill:'fastupi' }
+    ];
+    document.getElementById('v3PillRow').innerHTML = pills.map(function(p){
+      return '<button type="button" class="v3-pill' + (currentPillFilter === p.key ? ' active' : '') + '" data-pill="' + p.pill + '" data-key="' + p.key + '">' + p.label + '</button>';
+    }).join('');
+    [].slice.call(document.getElementById('v3PillRow').querySelectorAll('.v3-pill')).forEach(function(btn){
+      btn.addEventListener('click', function(){ currentPillFilter = btn.dataset.key; renderWorkbenchTable(); });
+    });
+  }
+
+  function renderWorkbenchTable(){
+    renderPillRow();
+    var list = workbenchOrders.filter(function(o){
+      if(currentPillFilter === 'pending') return o.auditState === 0;
+      if(currentPillFilter === 'reviewing') return o.auditState === 1;
+      return true;
+    });
+    var body = document.getElementById('v3WorkbenchBody');
+    if(!list.length){
+      body.innerHTML = '<tr><td colspan="16" style="text-align:center; color:#9ca3af; padding:24px;">暂无匹配订单</td></tr>';
+      return;
+    }
+    body.innerHTML = list.map(function(o){
+      var stateHtml = o.auditState === 0
+        ? '<span class="v3-ntag v3-ntag--default">待审核</span>'
+        : '<span class="v3-ntag v3-ntag--success">审核中</span>';
+      var actionsHtml = o.auditState === 0
+        ? '<button class="v3-btn v3-btn--success" data-action="start" data-order="' + o.orderNo + '">开始审核</button>' +
+          '<button class="v3-btn v3-btn--warning" data-action="assign" data-order="' + o.orderNo + '">指派组长</button>'
+        : '<button class="v3-btn v3-btn--primary" data-action="detail" data-order="' + o.orderNo + '">详情</button>' +
+          '<button class="v3-btn v3-btn--warning" data-action="assign" data-order="' + o.orderNo + '">指派组长</button>';
+      return '<tr>' +
+        '<td><span class="v3-ntag v3-ntag--info">' + o.tenant + '</span></td>' +
+        '<td><span style="color:#2563eb;">' + o.userId + '</span></td>' +
+        '<td>' + o.orderNo + '</td>' +
+        '<td>' + o.category + '</td>' +
+        '<td>' + o.applyTime + '</td>' +
+        '<td><span class="v3-ntag v3-ntag--success">' + o.currency + '</span></td>' +
+        '<td>' + o.multiple + '</td>' +
+        '<td>' + o.count + '</td>' +
+        '<td>' + o.fee + '</td>' +
+        '<td>' + o.amount + '</td>' +
+        '<td>' + o.actual + '</td>' +
+        '<td>' + stateHtml + '</td>' +
+        '<td>' + chipsHtml(o.reasons) + '</td>' +
+        '<td>' + o.auditMinutes + 'm</td>' +
+        '<td>' + o.assigner + '</td>' +
+        '<td><div class="v3-row-actions">' + actionsHtml + '</div></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  document.getElementById('v3WorkbenchBody').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-action]');
+    if(!btn) return;
+    var orderNo = btn.dataset.order;
+    if(btn.dataset.action === 'assign'){ window.__v3Toast('已指派组长（演示）'); return; }
+    if(btn.dataset.action === 'start'){
+      var o = workbenchOrders.filter(function(x){ return x.orderNo === orderNo; })[0];
+      if(o){ o.auditState = 1; o.auditMinutes = 0; }
+      renderWorkbenchTable();
+      openDetailModal(orderNo);
+      return;
+    }
+    if(btn.dataset.action === 'detail'){ openDetailModal(orderNo); }
+  });
+
+  /* ================= 订单详情弹窗 ================= */
+  function findWorkbenchOrder(orderNo){ return workbenchOrders.filter(function(o){ return o.orderNo === orderNo; })[0]; }
+
+  function renderDetailHtml(o, readonly){
+    var summary = [
+      ['商户', o.tenant], ['会员ID', o.userId], ['订单号', o.orderNo], ['币种', o.currency],
+      ['提现金额', o.amount], ['提现大类', o.category], ['申请时间', o.applyTime]
+    ].map(function(pair){ return '<div class="v3-summary-item"><span class="label">' + pair[0] + '：</span>' + pair[1] + '</div>'; }).join('');
+
+    var actionRow = readonly ? '' :
+      '<div class="v3-action-row">' +
+        '<div class="v3-action-card v3-action-card--primary">' +
+          '<strong>出款处理</strong>' +
+          '<div style="margin-bottom:10px;"><select class="demo-select"><option>请选择出款通道</option></select></div>' +
+          '<button class="v3-btn v3-btn--primary" onclick="window.__v3Toast(\'已确认通道出款（演示）\')">确认通道出款</button>' +
+          '<button class="v3-btn v3-btn--default" onclick="window.__v3Toast(\'已人工确认（演示）\')">人工确认</button>' +
+        '</div>' +
+        '<div class="v3-action-card v3-action-card--secondary">' +
+          '<strong>辅助处理</strong>' +
+          '<button class="v3-btn v3-btn--default" onclick="window.__v3Toast(\'已指派组长（演示）\')">指派组长</button>' +
+          '<button class="v3-btn v3-btn--error-secondary" data-open-reason="' + o.orderNo + '">确认取消</button>' +
+        '</div>' +
+      '</div>';
+
+    return '<div class="v3-summary-row">' + summary + '</div>' +
+      '<div class="v3-detail-tabs">' +
+        '<div class="v3-detail-tab active">订单详情</div>' +
+        '<div class="v3-detail-tab">订单记录</div>' +
+        '<div class="v3-detail-tab">会员详情</div>' +
+        '<div class="v3-detail-tab">游戏记录</div>' +
+        '<div class="v3-detail-tab">账变记录</div>' +
+      '</div>' +
+      '<div style="padding:14px 18px;">' +
+        '<div class="demo-field">' +
+          '<label>本单命中的拦截原因（自动校验 · 仅供参考）</label>' +
+          chipsHtml(o.reasons, '未命中任何拦截条件') +
+        '</div>' +
+      '</div>' +
+      '<div class="v3-field-grid">' +
+        '<div><span class="label">实际到账金额：</span>' + o.actual + '</div>' +
+        '<div><span class="label">手续费：</span>' + o.fee + '</div>' +
+        '<div><span class="label">提现倍数：</span>' + o.multiple + '</div>' +
+        '<div><span class="label">提现次数：</span>' + o.count + '</div>' +
+        '<div><span class="label">最后充值金额：</span>--</div>' +
+        '<div><span class="label">累计充提差：</span>--</div>' +
+        '<div><span class="label">人工备注：</span>--</div>' +
+        '<div><span class="label">指派人：</span>' + o.assigner + '</div>' +
+        '<div><span class="label">订单备注：</span>--</div>' +
+        '<div><span class="label">指派备注：</span>--</div>' +
+      '</div>' +
+      actionRow +
+      (readonly ? '<p class="demo-hint" style="padding:0 18px 14px;">该订单已是终态，以只读模式打开（对应真实页面的 hideBottomOps）。</p>' : '');
+  }
+
+  function openDetailModal(orderNo, readonly, recordOrder){
+    var o = readonly
+      ? { orderNo: recordOrder.orderNo, tenant: recordOrder.tenant, userId: recordOrder.userId, currency: recordOrder.currency, amount: recordOrder.amount, category: recordOrder.category, applyTime: recordOrder.applyTime, actual: recordOrder.actual, fee: recordOrder.fee, multiple: recordOrder.multiple, count: recordOrder.count, assigner: recordOrder.operator, reasons: recordOrder.reasons }
+      : findWorkbenchOrder(orderNo);
+    if(!o) return;
+    document.getElementById('v3DetailCard').innerHTML = renderDetailHtml(o, !!readonly);
+    document.getElementById('v3DetailMask').hidden = false;
+    var openReasonBtn = document.getElementById('v3DetailCard').querySelector('[data-open-reason]');
+    if(openReasonBtn){
+      openReasonBtn.addEventListener('click', function(){ openReasonModal(openReasonBtn.dataset.openReason); });
+    }
+  }
+  function closeDetailModal(){ document.getElementById('v3DetailMask').hidden = true; }
+  document.getElementById('v3DetailMask').addEventListener('click', function(e){ if(e.target === this) closeDetailModal(); });
+
+  /* ================= 确认取消（驳回）弹窗 ================= */
+  var reasonChipsBox = document.getElementById('v3ReasonChips');
+  var reasonTagSelect = document.getElementById('v3ReasonTagSelect');
+  var reasonTextArea = document.getElementById('v3ReasonText');
+  var reasonEditedBadge = document.getElementById('v3ReasonEditedBadge');
+  var reasonLangTabs = [].slice.call(document.getElementById('v3ReasonLangTabs').querySelectorAll('.v3-tab[data-lang]'));
+  var reasonEditingLang = 'zh';
+  var reasonContentDraft = { zh:'', en:'' };
+  var reasonAutofillDraft = { zh:'', en:'' };
+
+  function renderReasonTagOptions(){
+    var current = reasonTagSelect.value;
+    reasonTagSelect.innerHTML = '<option value="">请选择标签</option>' +
+      demoTags.map(function(t){ return '<option value="' + t.id + '">' + tagName(t) + '</option>'; }).join('');
+    if(demoTags.some(function(t){ return t.id === current; })) reasonTagSelect.value = current;
+  }
+
+  function refreshReasonTextArea(){
+    reasonTextArea.value = reasonContentDraft[reasonEditingLang];
+    reasonEditedBadge.hidden = (reasonContentDraft[reasonEditingLang] === reasonAutofillDraft[reasonEditingLang]);
+    reasonLangTabs.forEach(function(tb){ tb.classList.toggle('active', tb.dataset.lang === reasonEditingLang); });
+  }
+
+  function openReasonModal(orderNo){
+    var o = findWorkbenchOrder(orderNo);
+    if(!o) return;
+    currentReasonOrderNo = orderNo;
+    reasonChipsBox.innerHTML = (o.reasons || []).map(function(r){ return '<span class="demo-chip">' + r + '</span>'; }).join('') || '<span style="color:#c4c9d0;">未命中任何拦截条件</span>';
+    renderReasonTagOptions();
+    reasonTagSelect.value = '';
+    reasonEditingLang = 'zh';
+    reasonContentDraft = { zh:'', en:'' };
+    reasonAutofillDraft = { zh:'', en:'' };
+    refreshReasonTextArea();
+    document.getElementById('v3ReasonMask').hidden = false;
+  }
+  function closeReasonModal(){ document.getElementById('v3ReasonMask').hidden = true; }
+  document.getElementById('v3ReasonMask').addEventListener('click', function(e){ if(e.target === this) closeReasonModal(); });
+  document.getElementById('v3ReasonCloseBtn').addEventListener('click', closeReasonModal);
+
+  function applyReasonAutofill(){
+    var tag = demoTags.filter(function(t){ return t.id === reasonTagSelect.value; })[0];
+    if(!tag){
+      reasonContentDraft = { zh:'', en:'' };
+      reasonAutofillDraft = { zh:'', en:'' };
+      refreshReasonTextArea();
+      return;
+    }
+    reasonAutofillDraft = { zh: tag.i18n.zh.content, en: tag.i18n.en.content };
+    reasonContentDraft = { zh: tag.i18n.zh.content, en: tag.i18n.en.content };
+    reasonEditingLang = 'zh';
+    refreshReasonTextArea();
+  }
+  reasonTagSelect.addEventListener('change', applyReasonAutofill);
+  reasonLangTabs.forEach(function(tb){
+    tb.addEventListener('click', function(){
+      reasonContentDraft[reasonEditingLang] = reasonTextArea.value;
+      reasonEditingLang = tb.dataset.lang;
+      refreshReasonTextArea();
+    });
+  });
+  reasonTextArea.addEventListener('input', function(){
+    reasonContentDraft[reasonEditingLang] = reasonTextArea.value;
+    reasonEditedBadge.hidden = (reasonTextArea.value === reasonAutofillDraft[reasonEditingLang]);
+  });
+
+  document.getElementById('v3ReasonConfirmBtn').addEventListener('click', function(){
+    var tag = demoTags.filter(function(t){ return t.id === reasonTagSelect.value; })[0];
+    if(!tag){ window.__v3Toast('请先选择驳回标签'); return; }
+    var o = findWorkbenchOrder(currentReasonOrderNo);
+    if(!o) return;
+    reasonContentDraft[reasonEditingLang] = reasonTextArea.value;
+    var edited = reasonContentDraft.zh !== reasonAutofillDraft.zh || reasonContentDraft.en !== reasonAutofillDraft.en;
+
+    recordsOrders.unshift({
+      orderNo:o.orderNo, tenant:o.tenant, userId:o.userId, category:o.category, bank:'--', currency:o.currency,
+      multiple:o.multiple, count:o.count, fee:o.fee, amount:o.amount, actual:o.actual, state:2,
+      applyTime:o.applyTime, completeTime:'2026-09-10 演示时刻', thirdParty:'人工取消',
+      reasons:o.reasons, tagId:tag.id, tagTitle:tagName(tag), manualRemark:null, orderRemark:'--', operator:'当前登录员工（演示）'
+    });
+    workbenchOrders = workbenchOrders.filter(function(x){ return x.orderNo !== o.orderNo; });
+
+    closeReasonModal();
+    closeDetailModal();
+    renderWorkbenchTable();
+    renderRecordsTable();
+    renderStats();
+    window.__v3Toast('订单已取消 · 标签：' + tagName(tag) + (edited ? ' · 文案已编辑' : ''));
+  });
+
+  /* ================= 全部提现记录 ================= */
+  function populateRecordsFilters(){
+    var tenantSel = document.getElementById('v3fTenant');
+    var stateSel = document.getElementById('v3fState');
+    var curTenant = tenantSel.value;
+    var curState = stateSel.value;
+    var tenants = Array.from(new Set(recordsOrders.map(function(o){ return o.tenant; })));
+    tenantSel.innerHTML = '<option value="">全部</option>' + tenants.map(function(t){ return '<option value="' + t + '">' + t + '</option>'; }).join('');
+    stateSel.innerHTML = '<option value="">全部</option>' + Object.keys(STATE_MAP).map(function(k){ return '<option value="' + k + '">' + STATE_MAP[k].text + '</option>'; }).join('');
+    if(tenants.indexOf(curTenant) >= 0) tenantSel.value = curTenant;
+    if(STATE_MAP.hasOwnProperty(curState)) stateSel.value = curState;
+  }
+
+  function remarkHtml(o){
+    var line1 = o.tagTitle
+      ? '<span class="demo-tag-link" data-tag-id="' + (o.tagId || '') + '" style="color:var(--manual); font-weight:600; cursor:pointer; text-decoration:underline dotted;">拒绝标签：' + o.tagTitle + '</span>'
+      : (o.manualRemark ? '人工备注：' + o.manualRemark : '人工备注：--');
+    return '<div>' + line1 + '</div><div style="color:#9ca3af;">订单备注：' + (o.orderRemark || '--') + '</div>';
+  }
+
+  var tagPreviewTag = null;
+  var tagPreviewLangTabs = [].slice.call(document.getElementById('v3TagPreviewLangTabs').querySelectorAll('.v3-tab[data-lang]'));
+
+  function renderTagPreviewLang(lang){
+    if(!tagPreviewTag) return;
+    var t = tagPreviewTag.i18n[lang];
+    document.getElementById('v3TagPreviewTitle').textContent = t.title;
+    document.getElementById('v3TagPreviewContent').textContent = t.content;
+    tagPreviewLangTabs.forEach(function(tb){ tb.classList.toggle('active', tb.dataset.lang === lang); });
+  }
+  tagPreviewLangTabs.forEach(function(tb){
+    tb.addEventListener('click', function(){ renderTagPreviewLang(tb.dataset.lang); });
+  });
+
+  function openTagPreview(tagId){
+    var tag = demoTags.filter(function(t){ return t.id === tagId; })[0];
+    if(!tag) return;
+    tagPreviewTag = tag;
+    renderTagPreviewLang(STATS_LANG);
+    document.getElementById('v3TagPreviewMask').hidden = false;
+  }
+  document.getElementById('v3TagPreviewCloseBtn').addEventListener('click', function(){ document.getElementById('v3TagPreviewMask').hidden = true; });
+  document.getElementById('v3TagPreviewMask').addEventListener('click', function(e){ if(e.target === this) this.hidden = true; });
+
+  function renderRecordsTable(){
+    populateRecordsFilters();
+    var tenantFilter = document.getElementById('v3fTenant').value;
+    var userIdFilter = document.getElementById('v3fUserId').value.trim();
+    var stateFilter = document.getElementById('v3fState').value;
+    var list = recordsOrders.filter(function(o){
+      if(tenantFilter && o.tenant !== tenantFilter) return false;
+      if(userIdFilter && o.userId.indexOf(userIdFilter) === -1) return false;
+      if(stateFilter !== '' && String(o.state) !== stateFilter) return false;
+      return true;
+    });
+    var body = document.getElementById('v3RecordsBody');
+    if(!list.length){
+      body.innerHTML = '<tr><td colspan="18" style="text-align:center; color:#9ca3af; padding:24px;">暂无匹配订单</td></tr>';
+      return;
+    }
+    body.innerHTML = list.map(function(o){
+      var st = STATE_MAP[o.state];
+      var opActions = '<button class="v3-btn v3-btn--text" data-action="view" data-order="' + o.orderNo + '">查看详情</button>';
+      if(o.state === 3){
+        opActions += '<button class="v3-btn v3-btn--text" onclick="window.__v3Toast(\'已人工确认（演示）\')">人工确认</button>';
+        opActions += '<button class="v3-btn v3-btn--text" onclick="window.__v3Toast(\'已提交订单重审（演示）\')">订单重审</button>';
+      }
+      opActions += '<button class="v3-btn v3-btn--text" onclick="window.__v3Toast(\'已修改订单备注（演示）\')">修改订单备注</button>';
+      return '<tr>' +
+        '<td><span class="v3-ntag v3-ntag--info">' + o.tenant + '</span></td>' +
+        '<td><span style="color:#2563eb;">' + o.userId + '</span></td>' +
+        '<td>' + o.orderNo + '</td>' +
+        '<td>' + o.category + '</td>' +
+        '<td>' + o.bank + '</td>' +
+        '<td><span class="v3-ntag v3-ntag--success">' + o.currency + '</span></td>' +
+        '<td>' + o.multiple + '</td>' +
+        '<td>' + o.count + '</td>' +
+        '<td>' + o.fee + '</td>' +
+        '<td>' + o.amount + '</td>' +
+        '<td>' + o.actual + '</td>' +
+        '<td><span class="v3-ntag v3-ntag--' + st.cls + '">' + st.text + '</span></td>' +
+        '<td>申请：' + o.applyTime + '<br/>完成：' + o.completeTime + '</td>' +
+        '<td>' + o.thirdParty + '</td>' +
+        '<td>' + chipsHtml(o.reasons, '历史数据未记录') + '</td>' +
+        '<td>' + remarkHtml(o) + '</td>' +
+        '<td>' + o.operator + '</td>' +
+        '<td><div class="v3-row-actions">' + opActions + '</div></td>' +
+        '</tr>';
+    }).join('');
+  }
+  document.getElementById('v3RecordsFilterBtn').addEventListener('click', renderRecordsTable);
+  document.getElementById('v3RecordsResetBtn').addEventListener('click', function(){
+    document.getElementById('v3fTenant').value = '';
+    document.getElementById('v3fUserId').value = '';
+    document.getElementById('v3fState').value = '';
+    renderRecordsTable();
+  });
+  document.getElementById('v3RecordsBody').addEventListener('click', function(e){
+    var tagLink = e.target.closest('.demo-tag-link');
+    if(tagLink){ openTagPreview(tagLink.dataset.tagId); return; }
+    var btn = e.target.closest('[data-action="view"]');
+    if(!btn) return;
+    var o = recordsOrders.filter(function(x){ return x.orderNo === btn.dataset.order; })[0];
+    if(o) openDetailModal(null, true, o);
+  });
+
+  /* ================= 标签库 ================= */
+  var libFormMask = document.getElementById('v3LibFormMask');
+  var libTitleInput = document.getElementById('v3LibTitle');
+  var libContentArea = document.getElementById('v3LibContent');
+  var libLangTabs = [].slice.call(libFormMask.querySelectorAll('.v3-tab[data-lang]'));
+
+  function renderLibList(){
+    document.getElementById('v3LibList').innerHTML = demoTags.map(function(tag){
+      var zh = tag.i18n.zh;
+      var preview = (zh.content || '').slice(0, 24) + ((zh.content || '').length > 24 ? '…' : '');
+      return '<tr><td><strong>' + zh.title + '</strong></td><td style="white-space:normal; max-width:360px;">' + preview + '</td>' +
+        '<td><button class="v3-btn v3-btn--text" data-edit="' + tag.id + '">编辑</button></td></tr>';
+    }).join('');
+    [].slice.call(document.getElementById('v3LibList').querySelectorAll('[data-edit]')).forEach(function(btn){
+      btn.addEventListener('click', function(){ openLibForm(btn.dataset.edit); });
+    });
+  }
+
+  function fillLibFormLang(lang){
+    libTitleInput.value = libEditingDraft[lang].title;
+    libContentArea.value = libEditingDraft[lang].content;
+  }
+
+  function openLibForm(id){
+    libEditingId = id;
+    libEditingLang = 'zh';
+    if(id){
+      var tag = demoTags.filter(function(t){ return t.id === id; })[0];
+      document.getElementById('v3LibFormTitle').textContent = '编辑标签';
+      libEditingDraft = { zh:{ title:tag.i18n.zh.title, content:tag.i18n.zh.content }, en:{ title:tag.i18n.en.title, content:tag.i18n.en.content } };
+    } else {
+      document.getElementById('v3LibFormTitle').textContent = '新增标签';
+      libEditingDraft = { zh:{ title:'', content:'' }, en:{ title:'', content:'' } };
+    }
+    libLangTabs.forEach(function(t){ t.classList.toggle('active', t.dataset.lang === 'zh'); });
+    fillLibFormLang('zh');
+    libFormMask.hidden = false;
+  }
+  document.getElementById('v3LibAddBtn').addEventListener('click', function(){ openLibForm(null); });
+  document.getElementById('v3LibCancelBtn').addEventListener('click', function(){ libFormMask.hidden = true; });
+  libFormMask.addEventListener('click', function(e){ if(e.target === this) libFormMask.hidden = true; });
+
+  libLangTabs.forEach(function(t){
+    t.addEventListener('click', function(){
+      libEditingDraft[libEditingLang] = { title: libTitleInput.value, content: libContentArea.value };
+      libEditingLang = t.dataset.lang;
+      libLangTabs.forEach(function(x){ x.classList.toggle('active', x === t); });
+      fillLibFormLang(libEditingLang);
+    });
+  });
+
+  document.getElementById('v3LibSaveBtn').addEventListener('click', function(){
+    libEditingDraft[libEditingLang] = { title: libTitleInput.value, content: libContentArea.value };
+    if(!libEditingDraft.zh.title.trim()){ window.__v3Toast('请先填写中文标题'); return; }
+    if(libEditingId){
+      var tag = demoTags.filter(function(t){ return t.id === libEditingId; })[0];
+      tag.i18n.zh = { title: libEditingDraft.zh.title.trim(), content: libEditingDraft.zh.content };
+      tag.i18n.en = { title: libEditingDraft.en.title.trim(), content: libEditingDraft.en.content };
+    } else {
+      seq += 1;
+      demoTags.push({ id:'new' + seq, i18n:{
+        zh:{ title: libEditingDraft.zh.title.trim(), content: libEditingDraft.zh.content },
+        en:{ title: libEditingDraft.en.title.trim(), content: libEditingDraft.en.content }
+      } });
+    }
+    libFormMask.hidden = true;
+    renderLibList();
+    renderReasonTagOptions();
+    renderStats();
+    window.__v3Toast('已保存（演示）');
+  });
+
+  /* ================= 原因统计 ================= */
+  function switchLibTab(name){
+    [].slice.call(document.querySelectorAll('.v3-tab[data-libtab]')).forEach(function(t){ t.classList.toggle('active', t.dataset.libtab === name); });
+    document.getElementById('v3LibTagsBody').hidden = name !== 'tags';
+    document.getElementById('v3LibStatsBody').hidden = name !== 'stats';
+    if(name === 'stats') renderStats();
+  }
+  [].slice.call(document.querySelectorAll('.v3-tab[data-libtab]')).forEach(function(t){
+    t.addEventListener('click', function(){ switchLibTab(t.dataset.libtab); });
+  });
+
+  var DEMO_TODAY = '2026-09-10';
+  function toISODate(d){
+    var m = d.getMonth() + 1, day = d.getDate();
+    return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
+  }
+
+  [].slice.call(document.querySelectorAll('#v3LibStatsBody [data-range]')).forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var fromEl = document.getElementById('v3StatsFrom'), toEl = document.getElementById('v3StatsTo');
+      if(btn.dataset.range === 'all'){ fromEl.value = ''; toEl.value = ''; }
+      else {
+        var end = new Date(DEMO_TODAY + 'T00:00:00');
+        var start = new Date(DEMO_TODAY + 'T00:00:00');
+        start.setDate(start.getDate() - (parseInt(btn.dataset.range, 10) - 1));
+        fromEl.value = toISODate(start);
+        toEl.value = toISODate(end);
+      }
+      renderStats();
+    });
+  });
+  document.getElementById('v3StatsQueryBtn').addEventListener('click', renderStats);
+
+  function renderStats(){
+    var from = document.getElementById('v3StatsFrom').value;
+    var to = document.getElementById('v3StatsTo').value;
+    var tagged = recordsOrders.filter(function(o){
+      if(!o.tagTitle) return false;
+      var d = o.applyTime.slice(0, 10);
+      if(from && d < from) return false;
+      if(to && d > to) return false;
+      return true;
+    });
+    var total = tagged.length;
+    var groups = {};
+    tagged.forEach(function(o){
+      if(!groups[o.tagTitle]) groups[o.tagTitle] = { count:0, reasons:{} };
+      groups[o.tagTitle].count += 1;
+      (o.reasons || []).forEach(function(r){ groups[o.tagTitle].reasons[r] = true; });
+    });
+    var sorted = Object.keys(groups).map(function(title){
+      var g = groups[title];
+      var pct = total ? Math.round(g.count / total * 1000) / 10 : 0;
+      return { title:title, count:g.count, pct:pct, reasons:Object.keys(g.reasons) };
+    }).sort(function(a,b){ return b.count - a.count; });
+
+    document.getElementById('v3StatsTotal').innerHTML =
+      '<div class="v3-stat-total-num">' + total + '</div>' +
+      '<div class="v3-stat-total-label">标签化驳回总数' + (from || to ? '（所选时间段）' : '') + '</div>';
+
+    /* 按日期堆叠柱状图：每天一列，列内按标签颜色堆叠 */
+    var byDate = {};
+    tagged.forEach(function(o){
+      var d = o.applyTime.slice(0, 10);
+      if(!byDate[d]) byDate[d] = {};
+      byDate[d][o.tagTitle] = (byDate[d][o.tagTitle] || 0) + 1;
+    });
+    var dates = Object.keys(byDate).sort();
+    var dayTotals = dates.map(function(d){
+      return Object.keys(byDate[d]).reduce(function(s, k){ return s + byDate[d][k]; }, 0);
+    });
+    var maxDayTotal = Math.max.apply(null, dayTotals.length ? dayTotals : [0]) || 1;
+    var tagOrder = demoTags.map(function(t){ return tagName(t); });
+
+    document.getElementById('v3StatsChart').innerHTML = dates.length ? dates.map(function(d){
+      var dayData = byDate[d];
+      var segs = tagOrder.filter(function(title){ return dayData[title]; }).map(function(title){
+        var h = Math.round(dayData[title] / maxDayTotal * 150);
+        return '<div style="height:' + h + 'px; background:' + colorForTag(title) + ';" title="' + title + '：' + dayData[title] + ' 单"></div>';
+      }).join('');
+      return '<div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0;">' +
+        '<div style="display:flex; flex-direction:column-reverse; width:30px; height:150px; border-radius:4px 4px 0 0; overflow:hidden; background:#f1f5f9;">' + segs + '</div>' +
+        '<div style="font-size:11px; color:#6b7280; white-space:nowrap;">' + d.slice(5) + '</div>' +
+        '</div>';
+    }).join('') : '<p class="demo-hint" style="margin:0;">所选时间段内暂无数据</p>';
+
+    document.getElementById('v3StatsLegend').innerHTML = sorted.map(function(r){
+      return '<span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:#374151;">' +
+        '<span style="width:10px; height:10px; border-radius:2px; background:' + colorForTag(r.title) + '; display:inline-block;"></span>' + r.title + '</span>';
+    }).join('');
+
+    document.getElementById('v3StatsBody').innerHTML = sorted.length ? sorted.map(function(r){
+      return '<tr><td>' + r.title + '</td><td>' + r.count + '</td><td>' + r.pct + '%</td><td>' + chipsHtml(r.reasons) + '</td></tr>';
+    }).join('') : '<tr><td colspan="4" style="text-align:center; color:#9ca3af; padding:24px;">暂无标签化后的驳回数据，先去「出款员工操作台」演示一次驳回</td></tr>';
+  }
+
+  /* ================= toast ================= */
+  var toastEl = document.getElementById('demoToast');
+  var toastTimer = null;
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2400);
+  }
+  window.__v3Toast = showToast;
+})();
+</script>
+
+<!--claude-mermaid-runtime-begin:3477-->
+<style>.mermaid-diagram{margin-block:4px}.mermaid-diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.1/dist/mermaid.min.js"></script>
+<script>(function(){
+var CFG={"palettes":{"light":{"surface":"#f4efe4","text":"#42392e","line":"#8a7f6d","border":"#7a6c52","bg":"#fffdf8"},"dark":{"surface":"#262b34","text":"#f2f3f5","line":"#a8adb8","border":"#9aa4b8","bg":"#1f232b"}}};
+if(typeof mermaid==='undefined')return;
+var pres=Array.prototype.slice.call(document.querySelectorAll('pre.mermaid')).filter(function(p){if(p.hasAttribute('data-claude-mermaid-claimed'))return false;p.setAttribute('data-claude-mermaid-claimed','1');return true;});
+if(!pres.length)return;
+var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+var root=document.documentElement;
+var items=pres.map(function(pre){
+var mount=document.createElement('div');mount.className='mermaid-diagram';
+return {pre:pre,mount:mount,src:pre.textContent||''};
+});
+var seq=0;
+var renderGen=0;
+var lastKey='';
+function pageBg(fallback){
+var els=[document.body,document.documentElement];
+for(var i=0;i<els.length;i++){
+var c=els[i]&&getComputedStyle(els[i]).backgroundColor;
+if(c&&c!=='transparent'&&c!=='rgba(0, 0, 0, 0)')return c;
+}
+return fallback;
+}
+function render(){
+var theme=root.getAttribute('data-theme');
+var dark=theme==='dark'||(!!(mq&&mq.matches)&&theme!=='light');
+var pal=dark?CFG.palettes.dark:CFG.palettes.light;
+var bg=pageBg(pal.bg);
+var key=(dark?'d':'l')+'|'+bg;
+if(key===lastKey)return;
+lastKey=key;
+var gen=++renderGen;
+var font=getComputedStyle(document.body).fontFamily||'sans-serif';
+var nat={useMaxWidth:false};
+mermaid.initialize({
+startOnLoad:false,securityLevel:'strict',theme:'base',
+flowchart:nat,sequence:nat,er:nat,state:nat,class:nat,pie:nat,
+gantt:nat,journey:nat,timeline:nat,gitGraph:nat,mindmap:nat,xyChart:nat,
+quadrantChart:nat,sankey:nat,c4:nat,requirement:nat,block:nat,
+packet:nat,kanban:nat,architecture:nat,radar:nat,
+themeVariables:{background:bg,mainBkg:pal.surface,primaryColor:pal.surface,
+primaryTextColor:pal.text,lineColor:pal.line,primaryBorderColor:pal.border,
+nodeBorder:pal.border,clusterBorder:pal.border,edgeLabelBackground:bg,
+clusterBkg:'rgba(127,127,127,0.07)',titleColor:pal.text,
+darkMode:dark,rowOdd:bg,rowEven:'rgba(127,127,127,0.07)',
+attributeBackgroundColorOdd:bg,attributeBackgroundColorEven:'rgba(127,127,127,0.07)',
+fontSize:'16px',fontFamily:font},
+themeCSS:'.node rect, .node circle, .node polygon, .node path, .cluster rect { stroke-width: 2px; }'
+});
+items.forEach(function(it){
+var id='claude-mermaid-'+seq++;
+mermaid.render(id,it.src).then(function(r){
+if(gen!==renderGen)return;
+var prev=it.pre.previousElementSibling;
+if(prev&&prev.className==='mermaid-diagram'&&prev!==it.mount)return;
+it.mount.innerHTML=r.svg;
+if(!it.mount.parentNode)it.pre.parentNode.insertBefore(it.mount,it.pre);
+it.pre.style.display='none';
+},function(){
+var scratch=document.getElementById(id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+scratch=document.getElementById('d'+id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+if(gen!==renderGen)return;
+if(it.mount.parentNode)it.mount.parentNode.removeChild(it.mount);
+it.pre.style.display='';
+});
+});
+}
+render();
+if(mq&&mq.addEventListener)mq.addEventListener('change',render);
+if(typeof MutationObserver!=='undefined')new MutationObserver(render).observe(root,{attributes:true,attributeFilter:['data-theme']});
+})();</script>
+<!--claude-mermaid-runtime-end-->
+</body>
+</html>
