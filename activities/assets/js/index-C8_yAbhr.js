@@ -1,0 +1,1 @@
+import{_ as e,I as n,K as s}from"./index-CvMvgJCr.js";const t={};function c(i,r){return n(),s("div")}const a=e(t,[["render",c],["__file","/Users/eason/v1/Activities-工作副本/src/views/main/PointDetail/index.vue"]]);export{a as default};

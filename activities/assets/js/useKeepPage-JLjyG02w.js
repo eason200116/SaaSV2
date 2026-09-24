@@ -1,0 +1,1 @@
+import{l as n,N as p,O as u}from"./index-CvMvgJCr.js";function c(a){n();const t=(e,o)=>{console.log("routes",u.options.routes[41]),u.options.routes.forEach(r=>{r.name===e&&(r.meta.keepAlive=o)})},s=(e,o)=>{t(o,a.includes(e))};return p((e,o)=>{s(e.name,o.name)}),{setKeepPage:s,updateRouterKeepAlive:t}}export{c as u};
